@@ -1,0 +1,13 @@
+Package: RpacSPD
+Type: Package
+Title: Spatial Panel Data models
+Version: 0.1.0
+Date: 2019-4-12
+Author: Emmanuel S Tsyawo
+Maintainer: Emmanuel S Tsyawo <estsyaw@temple.edu>
+Description: This package contains routines for estimating and carrying out inference on both linear and nonlinear spatial panel data models developed in my papers. 
+License: GPL-2
+Encoding: UTF-8
+LazyData: true
+Imports: stats
+RoxygenNote: 6.1.1
