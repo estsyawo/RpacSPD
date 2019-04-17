@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Object class constructor — c_out_dep • RpacSPD</title>
+<title>Implemention - linear regression model — out_dep.lmcd • RpacSPD</title>
 
 <!-- jquery -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
@@ -30,9 +30,9 @@
 
 
 
-<meta property="og:title" content="Object class constructor — c_out_dep" />
+<meta property="og:title" content="Implemention - linear regression model — out_dep.lmcd" />
 
-<meta property="og:description" content="This function constructs an object class for the generic function out_dep()" />
+<meta property="og:description" content="Generate outcome variable for linear regression class of model" />
 <meta name="twitter:card" content="summary" />
 
 
@@ -94,44 +94,32 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Object class constructor</h1>
+    <h1>Implemention - linear regression model</h1>
     
-    <div class="hidden name"><code>c_out_dep.Rd</code></div>
+    <div class="hidden name"><code>out_dep.lmcd.Rd</code></div>
     </div>
 
     <div class="ref-description">
     
-    <p>This function constructs an object class for the generic function <code><a href='out_dep.html'>out_dep()</a></code></p>
+    <p>Generate outcome variable for linear regression class of model</p>
     
     </div>
 
-    <pre class="usage"><span class='fu'>c_out_dep</span>(<span class='no'>lc</span>, <span class='kw'>eta</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>modclass</span> <span class='kw'>=</span> <span class='st'>"lmcd"</span>)</pre>
+    <pre class="usage"><span class='co'># S3 method for lmcd</span>
+<span class='fu'><a href='out_dep.html'>out_dep</a></span>(<span class='no'>object</span>)</pre>
     
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
-      <th>lc</th>
-      <td><p>linear combination `lc = X'beta`</p></td>
-    </tr>
-    <tr>
-      <th>eta</th>
-      <td><p>for models needing extra parameter besides beta in the linear combination <code>lc</code>. 
-eta can be a vector. For "lmcd", <code>eta</code> is the vector of errors; must of the same length as Y
-For "nbcd", <code>eta</code> must be a vector of two elements; the first one is parameter <code>th</code>
-and the second is the seed for random generation. For other classes, eta is the seed for random 
-generation.</p></td>
-    </tr>
-    <tr>
-      <th>modclass</th>
-      <td><p>the class of model. Currently "lmcd" for linear regression, "logitcd" (logit model), 
-"poiscd" (poisson model), "probitcd" (probit model), "nbcd" (negative binomial) are supported.</p></td>
+      <th>object</th>
+      <td><p>object of class "lmcd"</p></td>
     </tr>
     </table>
     
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>object an object list with class attribute modclass.</p>
+    <p>Y vector of outcome variable</p>
     
 
   </div>

@@ -107,7 +107,7 @@
     
     </div>
 
-    <pre class="usage"><span class='fu'>c_crit</span>(<span class='no'>Y</span>, <span class='no'>lc</span>, <span class='kw'>eta</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>klass</span> <span class='kw'>=</span> <span class='st'>"lm"</span>)</pre>
+    <pre class="usage"><span class='fu'>c_crit</span>(<span class='no'>Y</span>, <span class='no'>lc</span>, <span class='kw'>eta</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>modclass</span> <span class='kw'>=</span> <span class='st'>"lmcd"</span>)</pre>
     
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -118,7 +118,7 @@
     </tr>
     <tr>
       <th>lc</th>
-      <td><p>linear combination `lc = X'beta`</p></td>
+      <td><p>linear combination \(lc = X'\beta\)</p></td>
     </tr>
     <tr>
       <th>eta</th>
@@ -126,15 +126,15 @@
 eta can be a vector</p></td>
     </tr>
     <tr>
-      <th>klass</th>
-      <td><p>the class of model. Currently "lm" for linear regression, "logit" (logit model), 
-"poisson" (poisson model), "probit" (probit model), "negbin" (negative binomial) are supported.</p></td>
+      <th>modclass</th>
+      <td><p>the class of model. Currently "lmcd" for linear regression, "logitcd" (logit model), 
+"poiscd" (poisson model), "probitcd" (probit model), "nbcd" (negative binomial) are supported.</p></td>
     </tr>
     </table>
     
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>object an object list with class attribute klass.</p>
+    <p>object an object list with class attribute modclass.</p>
     
 
   </div>

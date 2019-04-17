@@ -118,7 +118,7 @@ regression results.</p>
     </tr>
     <tr>
       <th>...</th>
-      <td><p>arguments to be passed to <code><a href='ncd_gen.html'>ncd_gen()</a></code> except argument <code>crit_obs</code>. 
+      <td><p>arguments to be passed to <code><a href='ncd_gen.html'>ncd_gen()</a></code> <strong>except</strong> argument <code>rval</code>. 
 Argument names must match exactly.</p></td>
     </tr>
     <tr>
@@ -135,6 +135,8 @@ Argument names must match exactly.</p></td>
 <li><p>tstat vector of t-statistics</p></li>
 <li><p>pval vector of p-values</p></li>
 <li><p>varcov variance-covariance matrix if <code>rvcov</code> is set to <code>TRUE</code></p></li>
+<li><p>Wstat a Wald chi-square statistic</p></li>
+<li><p>pvwald Prob&gt;Wstat</p></li>
 </ul>
 
     
@@ -143,6 +145,17 @@ Argument names must match exactly.</p></td>
     <div class='dont-index'><p>ncd_gen</p></div>
     
 
+    <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
+    <pre class="examples"><div class='input'><span class='no'>pars</span><span class='kw'>=</span><span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/c'>c</a></span>(<span class='fl'>1.0</span>,<span class='fl'>0.5</span>,<span class='fl'>0.8</span>); <span class='no'>N</span> <span class='kw'>=</span> <span class='fl'>5</span>; <span class='no'>Tp</span> <span class='kw'>=</span> <span class='fl'>6</span>; <span class='no'>fnp</span><span class='kw'>&lt;-</span> <span class='kw'>function</span>(<span class='no'>x</span>,<span class='no'>y</span>,<span class='no'>k</span>){-(<span class='fl'>0.5</span>*<span class='no'>y</span>^<span class='fl'>4</span>+(<span class='no'>x</span>-<span class='no'>y</span>)^<span class='fl'>4</span>)^<span class='fl'>.25</span>} <span class='co'>#dummy k</span>
+<span class='no'>datpois</span><span class='kw'>=</span><span class='fu'><a href='gdat_cd.html'>gdat_cd</a></span>(<span class='kw'>pars</span><span class='kw'>=</span><span class='no'>pars</span>,<span class='kw'>N</span><span class='kw'>=</span><span class='no'>N</span>,<span class='kw'>Tp</span><span class='kw'>=</span><span class='no'>Tp</span>,<span class='kw'>seed</span><span class='kw'>=</span><span class='fl'>2</span>,<span class='kw'>fun</span><span class='kw'>=</span><span class='no'>fnp</span>,<span class='kw'>eta</span> <span class='kw'>=</span> <span class='fl'>200</span>,<span class='kw'>modclass</span><span class='kw'>=</span><span class='st'>"poiscd"</span>) <span class='co'>#poisson data </span>
+<span class='no'>k</span><span class='kw'>=</span><span class='fl'>1</span>; <span class='no'>lp</span><span class='kw'>=</span><span class='no'>k</span>*(<span class='no'>k</span>+<span class='fl'>1</span>)/<span class='fl'>2</span>; <span class='no'>startp</span> <span class='kw'>=</span> <span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/rep'>rep</a></span>(<span class='fl'>0.2</span>,(<span class='no'>lp</span>+<span class='fl'>2</span>)) <span class='co'># fun() is known</span>
+<span class='no'>zg1</span><span class='kw'>=</span><span class='kw pkg'>RpacSPD</span><span class='kw ns'>::</span><span class='fu'><a href='https://www.rdocumentation.org/packages/RpacSPD/topics/reg_cd'>reg_cd</a></span>(<span class='kw'>startp</span><span class='kw'>=</span><span class='no'>startp</span>,<span class='kw'>Y</span><span class='kw'>=</span><span class='no'>datpois</span>$<span class='no'>Y</span>,<span class='kw'>X</span><span class='kw'>=</span><span class='no'>datpois</span>$<span class='no'>X</span>,<span class='kw'>Xm</span><span class='kw'>=</span><span class='kw'>NULL</span>,<span class='kw'>Xi</span><span class='kw'>=</span><span class='no'>datpois</span>$<span class='no'>X</span>,<span class='kw'>Tid</span><span class='kw'>=</span><span class='no'>datpois</span>$<span class='no'>tpID</span>,
+<span class='kw'>Pid</span><span class='kw'>=</span><span class='no'>datpois</span>$<span class='no'>psID</span>,<span class='kw'>fun</span><span class='kw'>=</span><span class='no'>fnp</span>,<span class='kw'>k</span><span class='kw'>=</span><span class='no'>k</span>,<span class='kw'>nt</span><span class='kw'>=</span><span class='no'>lp</span>,<span class='kw'>utid</span><span class='kw'>=</span><span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/c'>c</a></span>(<span class='fl'>2</span>:<span class='no'>Tp</span>),<span class='kw'>modclass</span><span class='kw'>=</span><span class='st'>"poiscd"</span>) <span class='co'>#return function value</span>
+<span class='fu'><a href='BIC.html'>BIC</a></span>(<span class='no'>zg1</span>) <span class='co'>#compute BIC of fitted model</span></div><div class='output co'>#&gt; [1] -234.5832</div><div class='input'>
+<span class='no'>k</span><span class='kw'>=</span><span class='fl'>4</span>; <span class='no'>lp</span><span class='kw'>=</span><span class='no'>k</span>*(<span class='no'>k</span>+<span class='fl'>1</span>)/<span class='fl'>2</span>; <span class='no'>startp</span> <span class='kw'>=</span> <span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/rep'>rep</a></span>(<span class='fl'>0.2</span>,(<span class='no'>lp</span>+<span class='fl'>2</span>)) <span class='co'># fun() is polynomial approximated</span>
+<span class='no'>zg4</span><span class='kw'>=</span><span class='kw pkg'>RpacSPD</span><span class='kw ns'>::</span><span class='fu'><a href='https://www.rdocumentation.org/packages/RpacSPD/topics/reg_cd'>reg_cd</a></span>(<span class='kw'>startp</span><span class='kw'>=</span><span class='no'>startp</span>,<span class='kw'>Y</span><span class='kw'>=</span><span class='no'>datpois</span>$<span class='no'>Y</span>,<span class='kw'>X</span><span class='kw'>=</span><span class='no'>datpois</span>$<span class='no'>X</span>,<span class='kw'>Xm</span><span class='kw'>=</span><span class='kw'>NULL</span>,<span class='kw'>Xi</span><span class='kw'>=</span><span class='no'>datpois</span>$<span class='no'>X</span>,<span class='kw'>Tid</span><span class='kw'>=</span><span class='no'>datpois</span>$<span class='no'>tpID</span>,
+<span class='kw'>Pid</span><span class='kw'>=</span><span class='no'>datpois</span>$<span class='no'>psID</span>,<span class='kw'>fun</span><span class='kw'>=</span><span class='no'>polyexp</span>,<span class='kw'>k</span><span class='kw'>=</span><span class='no'>k</span>,<span class='kw'>nt</span><span class='kw'>=</span><span class='no'>lp</span>,<span class='kw'>utid</span><span class='kw'>=</span><span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/c'>c</a></span>(<span class='fl'>2</span>:<span class='no'>Tp</span>),<span class='kw'>modclass</span><span class='kw'>=</span><span class='st'>"poiscd"</span>) <span class='co'>#return function value</span>
+<span class='fu'><a href='BIC.html'>BIC</a></span>(<span class='no'>zg4</span>) <span class='co'>#compute BIC of fitted model</span></div><div class='output co'>#&gt; [1] -205.1826</div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
     <h2>Contents</h2>
@@ -152,7 +165,9 @@ Argument names must match exactly.</p></td>
       <li><a href="#value">Value</a></li>
 
       <li><a href="#see-also">See also</a></li>
-          </ul>
+      
+      <li><a href="#examples">Examples</a></li>
+    </ul>
 
   </div>
 </div>
