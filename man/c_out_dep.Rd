@@ -4,24 +4,22 @@
 \alias{c_out_dep}
 \title{Object class constructor}
 \usage{
-c_out_dep(lc, eta = NULL, klass = "lm")
+c_out_dep(lc, eta = NULL, modclass = "lmcd")
 }
 \arguments{
-\item{lc}{linear combination \code{lc = X'beta}}
+\item{lc}{linear combination `lc = X'beta`}
 
 \item{eta}{for models needing extra parameter besides beta in the linear combination \code{lc}. 
-eta can be a vector. For "lm", \code{eta} is the vector of errors; must of the same length as Y
-For "negbin", \code{eta} must be a vector of two elements; the first one is parameter \code{th}
+eta can be a vector. For "lmcd", \code{eta} is the vector of errors; must of the same length as Y
+For "nbcd", \code{eta} must be a vector of two elements; the first one is parameter \code{th}
 and the second is the seed for random generation. For other classes, eta is the seed for random 
 generation.}
 
-\item{klass}{the class of model. Currently "lm" for linear regression, "logit" (logit model), 
-"poisson" (poisson model), "probit" (probit model), "negbin" (negative binomial) are supported.}
-
-\item{Y}{vector of the outcome variable}
+\item{modclass}{the class of model. Currently "lmcd" for linear regression, "logitcd" (logit model), 
+"poiscd" (poisson model), "probitcd" (probit model), "nbcd" (negative binomial) are supported.}
 }
 \value{
-object an object list with class attribute klass.
+object an object list with class attribute modclass.
 }
 \description{
 This function constructs an object class for the generic function \code{out_dep()}

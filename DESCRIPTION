@@ -9,5 +9,5 @@ Description: This package contains routines for estimating and carrying out infe
 License: GPL-2
 Encoding: UTF-8
 LazyData: true
-Imports: stats
+Imports: stats,MASS,pracma,quantreg
 RoxygenNote: 6.1.1

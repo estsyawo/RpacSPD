@@ -4,8 +4,8 @@
 \alias{ncd_gen}
 \title{Cross-sectional dependence in models}
 \usage{
-ncd_gen(pars, Y, X, Xm = NULL, Xi = X, Tid, Pid, fun = fn4, k = 1,
-  nt, utid, modclass = "lm", crit_obs = FALSE)
+ncd_gen(pars, Y, X, Xm = NULL, Xi = X, Tid, Pid, fun, k = 1, nt,
+  utid, modclass = "lmcd", rval = "crit")
 }
 \arguments{
 \item{pars}{vector of parameter values at which to evaluate the function}
@@ -22,9 +22,12 @@ ncd_gen(pars, Y, X, Xm = NULL, Xi = X, Tid, Pid, fun = fn4, k = 1,
 
 \item{Pid}{unit ID}
 
-\item{fun}{a function that parameterises the form of dependence. it can be user-written}
+\item{fun}{a function that parameterises cross-sectional dependence. it can be user-written. It must
+take exactly three inputs: xi,xj, and k. see \link{polyexp}, \link{polyexp_mul}, \link{inter_xij}
+for example.}
 
-\item{k}{order of polynomial approximation for \code{fun()}}
+\item{k}{order of polynomial approximation for \code{fun()}; this can be set as a dummy for non-polynomial
+forms of \code{fun}}
 
 \item{nt}{number of terms in approximation; should be of length equal to output of \code{fun()}}
 
@@ -32,15 +35,27 @@ ncd_gen(pars, Y, X, Xm = NULL, Xi = X, Tid, Pid, fun = fn4, k = 1,
 
 \item{modclass}{the class of model. See description above for classes supported.}
 
-\item{crit_obs}{a logical for vector of observation-specific criterion values, squared residuals for 
-"lm", negative log-likelihoods for MLE methods, etc.}
+\item{rval}{character string naming the output to return; "crit" - value of criterion, 
+"critobs" - observation-specific criterion values, squared residuals for 
+"lmcd", negative log-likelihoods for MLE methods, etc., or "Xweight" vector X*W where W collects weight matrices
+through time.}
 }
 \value{
 criterion value or vector of observation-specific criterion values if \code{crit_obs=TRUE}
 }
 \description{
 This routine computes all models considered for cross-sectional dependence using endogenously
-generated weight matrices. Currently "lm" for linear regression, "logit" (logit model), 
-"poisson" (poisson model), "probit" (probit model), "negbin" (negative binomial) are supported.
+generated weight matrices. Currently "lmcd" for linear regression, "logitcd" (logit model), 
+"poiscd" (poisson model), "probitcd" (probit model), "nbcd" (negative binomial) are supported.
 Note: the data should first be sorted by unit ID \code{Pid}, then by time ID \code{Tid}
+}
+\examples{
+pars=c(1.0,0.5,0.8); N = 5; Tp = 6; fnp<- function(x,y,k){-(0.5*y^4+(x-y)^4)^.25} #dummy k
+datpois=gdat_cd(pars=pars,N=N,Tp=Tp,seed=2,fun=fnp,eta = 200,modclass="poiscd") #poisson data 
+k=1; lp=k*(k+1)/2; startp = rep(0.2,(lp+2))
+RpacSPD::ncd_gen(pars=startp,Y=datpois$Y,X=datpois$X,Xm=NULL,Xi=datpois$X,Tid=datpois$tpID,
+Pid=datpois$psID,fun=fnp,k=k,nt=lp,utid=c(2:Tp),modclass="poiscd") #return function value
+RpacSPD::ncd_gen(pars=startp,Y=datpois$Y,X=datpois$X,Xm=NULL,Xi=datpois$X,Tid=datpois$tpID,
+Pid=datpois$psID,fun=fnp,k=k,nt=lp,utid=c(2:Tp),modclass="poiscd",rval="Xw") #return Xw
+
 }

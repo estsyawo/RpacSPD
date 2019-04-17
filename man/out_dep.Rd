@@ -6,11 +6,9 @@
 \usage{
 out_dep(object)
 }
+\arguments{
+\item{object}{Object of class attribute obtained from \code{c_out_dep()}}
+}
 \description{
 A generic function for randomly generating outcome variables for model classes.
-}
-\details{
-@param object Object of class attribute obtained from \code{c_out_dep()}
- 
- @export
 }

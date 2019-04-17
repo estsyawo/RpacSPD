@@ -4,23 +4,23 @@
 \alias{c_crit}
 \title{Concrete class constructor}
 \usage{
-c_crit(Y, lc, eta = NULL, klass = "lm")
+c_crit(Y, lc, eta = NULL, modclass = "lmcd")
 }
 \arguments{
 \item{Y}{vector of the outcome variable}
 
-\item{lc}{linear combination \code{lc = X'beta}}
+\item{lc}{linear combination \eqn{lc = X'\beta}}
 
 \item{eta}{for models needing extra parameter besides beta in the linear combination \code{lc}. 
 eta can be a vector}
 
-\item{klass}{the class of model. Currently "lm" for linear regression, "logit" (logit model), 
-"poisson" (poisson model), "probit" (probit model), "negbin" (negative binomial) are supported.}
+\item{modclass}{the class of model. Currently "lmcd" for linear regression, "logitcd" (logit model), 
+"poiscd" (poisson model), "probitcd" (probit model), "nbcd" (negative binomial) are supported.}
 }
 \value{
-object an object list with class attribute klass.
+object an object list with class attribute modclass.
 }
 \description{
-A function for constructing functions for concrete classes of models for the \code{crit} family of
-of functions.
+A function for constructing functions for concrete classes of models for the \code{crit()} family of
+ of functions.
 }
