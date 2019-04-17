@@ -1,2 +1,4 @@
 # rpac_spd
-R routines for spatial panel data methods in my papers.
+
+This package contains routines for estimating and carrying out inference 
+on both linear and nonlinear spatial panel data models developed in my papers. 
