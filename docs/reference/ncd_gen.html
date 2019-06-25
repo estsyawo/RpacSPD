@@ -112,7 +112,8 @@ Note: the data should first be sorted by unit ID <code>Pid</code>, then by time 
     </div>
 
     <pre class="usage"><span class='fu'>ncd_gen</span>(<span class='no'>pars</span>, <span class='no'>Y</span>, <span class='no'>X</span>, <span class='kw'>Xm</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>Xi</span> <span class='kw'>=</span> <span class='no'>X</span>, <span class='no'>Tid</span>, <span class='no'>Pid</span>, <span class='no'>fun</span>, <span class='kw'>k</span> <span class='kw'>=</span> <span class='fl'>1</span>, <span class='no'>nt</span>,
-  <span class='no'>utid</span>, <span class='kw'>modclass</span> <span class='kw'>=</span> <span class='st'>"lmcd"</span>, <span class='kw'>rval</span> <span class='kw'>=</span> <span class='st'>"crit"</span>)</pre>
+  <span class='no'>utid</span>, <span class='kw'>modclass</span> <span class='kw'>=</span> <span class='st'>"lmcd"</span>, <span class='kw'>rval</span> <span class='kw'>=</span> <span class='st'>"crit"</span>, <span class='kw'>eta</span> <span class='kw'>=</span> <span class='fl'>0.5</span>,
+  <span class='kw'>dWzero</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>)</pre>
     
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -174,6 +175,16 @@ forms of <code>fun</code></p></td>
 "critobs" - observation-specific criterion values, squared residuals for 
 "lmcd", negative log-likelihoods for MLE methods, etc., or "Xweight" vector X*W where W collects weight matrices
 through time.</p></td>
+    </tr>
+    <tr>
+      <th>eta</th>
+      <td><p>extra parameter to be passed, eg. \(\theta\) for negative binomial,\(\tau\) for quantile
+regression.</p></td>
+    </tr>
+    <tr>
+      <th>dWzero</th>
+      <td><p>logical. Should the diagonal elements of the weight matrix be set to zero? 
+Defaults to <code>FALSE</code>. Choose option <code>TRUE</code> if own drivers <code>Xi</code> should affect the outcome</p></td>
     </tr>
     </table>
     

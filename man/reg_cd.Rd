@@ -2,7 +2,7 @@
 % Please edit documentation in R/Functions_Cross_Dep.R
 \name{reg_cd}
 \alias{reg_cd}
-\title{Cross-sectional depdence in regression}
+\title{Cross-sectional dependence in regression}
 \usage{
 reg_cd(startp, ..., rvcov = FALSE)
 }

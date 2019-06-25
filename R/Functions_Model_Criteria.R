@@ -115,11 +115,10 @@ crit.probitcd<- function(object){
 
 crit.nbcd<- function(object){
   if(is.null(object$eta)){
-    stop("Error: This negative binomial class requires an additional parameter eta")
+    stop("Error: The negative binomial class requires an additional parameter eta")
   } #end if
-  eta2=1/(object$eta^2)
-  mu = exp(object$lc); dn = eta2+mu
-  lv = eta2*log(eta2/dn) + object$Y*log(mu/dn) + log(gamma(object$Y+eta2)/gamma(eta2))
+  theta = object$eta; Y = object$Y; mu = exp(object$lc); 
+  lv = lgamma(theta+Y)-lgamma(theta)-lgamma(Y+1)+theta*log(theta)+Y*log(mu+(Y == 0))-(theta+Y)*log(theta+mu)
   -sum(lv)
 } #return the neg. log-like for negative binomial
 
@@ -189,12 +188,11 @@ crit_obs.nbcd<- function(object){
   if(is.null(object$eta)){
     stop("Error: This negative binomial class requires an additional parameter eta")
   } #end if
-  eta2=1/(object$eta^2)
-  mu = exp(object$lc); dn = eta2+mu
-  lv = eta2*log(eta2/dn) + object$Y*log(mu/dn) + log(gamma(object$Y+eta2)/gamma(eta2))
+  theta = object$eta; Y = object$Y; mu = exp(object$lc); 
+  lv = lgamma(theta+Y)-lgamma(theta)-lgamma(Y+1)+theta*log(theta)+Y*log(mu+(Y == 0))-(theta+Y)*log(theta+mu)
+  #lv = eta2*log(eta2/dn) + object$Y*log(mu/dn) + log(gamma(object$Y+eta2)/gamma(eta2))
   -c(lv)
 }
-
 
 #=============================================================================================>
 #' Randomly generate outcome Y
@@ -365,7 +363,6 @@ BIC.regcd<- function(object){
   k = length(object$coefs)
   2*object$fval + (log(object$df+k)*k)
 }
-
 #=============================================================================================>
 #' Schwarz Information Criterion - lmcd class
 #' 
@@ -382,6 +379,86 @@ BIC.lmcd<- function(object){
   n*log(object$fval/n) + (log(n)*k)
 }
 
+#=============================================================================================>
+#' Model criterion function
+#' 
+#' A generic S3 function the Schwarz Information Criterion
+#' 
+#' @param object the object to be passed to the concrete class constructor \code{BIC}
+#' 
+#' @export
+
+AIC<- function(object) UseMethod("AIC")
+
+#=============================================================================================>
+#' Schwarz Information Criterion
+#' 
+#' Compute the Schwarz Information Criterion for the general class of models
+#' 
+#' @param object object returned as output from \link{reg_cd}
+#' 
+#' @return BIC value
+#' @export
+
+AIC.regcd<- function(object){
+  k = length(object$coefs)
+  2*object$fval + 2*k
+}
+#=============================================================================================>
+#' Schwarz Information Criterion - lmcd class
+#' 
+#' A class specific implementation of the Schwarz Information Criterion for "lmcd" class
+#' 
+#' @param object object returned as output from \link{reg_cd}
+#' 
+#' @return BIC value
+#' @export
+
+AIC.lmcd<- function(object){
+  k = length(object$coefs)
+  n = object$df+k
+  n*log(object$fval/n) + 2*k
+}
+#=============================================================================================>
+#' Model criterion function
+#' 
+#' A generic S3 function the Schwarz Information Criterion
+#' 
+#' @param object the object to be passed to the concrete class constructor \code{BIC}
+#' 
+#' @export
+
+HQIC<- function(object) UseMethod("BIC")
+
+#=============================================================================================>
+#' Schwarz Information Criterion
+#' 
+#' Compute the Schwarz Information Criterion for the general class of models
+#' 
+#' @param object object returned as output from \link{reg_cd}
+#' 
+#' @return BIC value
+#' @export
+
+HQIC.regcd<- function(object){
+  k = length(object$coefs)
+  2*object$fval + 2*k*log(log(object$df+k))
+}
+#=============================================================================================>
+#' Schwarz Information Criterion - lmcd class
+#' 
+#' A class specific implementation of the Schwarz Information Criterion for "lmcd" class
+#' 
+#' @param object object returned as output from \link{reg_cd}
+#' 
+#' @return BIC value
+#' @export
+
+HQIC.lmcd<- function(object){
+  k = length(object$coefs)
+  n = object$df+k
+  n*log(object$fval/n) + 2*k*log(log(n))
+}
 #=============================================================================================>
 #' Model criterion function
 #' 
@@ -475,7 +552,7 @@ regir.probitcd<- function(object,...){
 
 regir.nbcd<- function(object,...){
   dat = data.frame(object$Y,object$Xmat); names(dat)[1]="Y"
-  MASS::glm.nb(object$Y~.,data = dat,...)
+  MASS::glm.nb(object$Y~.,data = dat,...,maxit = 75)
 }
 
 #=============================================================================================>

@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Cross-sectional depdence in regression — reg_cdir • RpacSPD</title>
+<title>Cross-sectional dependence in regression — reg_cdir • RpacSPD</title>
 
 <!-- jquery -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
@@ -30,7 +30,7 @@
 
 
 
-<meta property="og:title" content="Cross-sectional depdence in regression — reg_cdir" />
+<meta property="og:title" content="Cross-sectional dependence in regression — reg_cdir" />
 
 <meta property="og:description" content="A routine like reg_cd() that partially optimises with respect \(\delta\) and 
 uses internal R routines to optimise with respect to \(\beta\). This is particularly
@@ -96,7 +96,7 @@ helpful in high dimensional settings." />
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Cross-sectional depdence in regression</h1>
+    <h1>Cross-sectional dependence in regression</h1>
     
     <div class="hidden name"><code>reg_cdir.Rd</code></div>
     </div>
@@ -170,12 +170,12 @@ Argument names must match exactly.</p></td>
 <span class='no'>datpois2</span> <span class='kw'>=</span> <span class='fu'><a href='gdat_cd.html'>gdat_cd</a></span>(<span class='kw'>pars</span><span class='kw'>=</span><span class='no'>pars2</span>,<span class='kw'>N</span><span class='kw'>=</span><span class='no'>N</span>,<span class='kw'>Tp</span><span class='kw'>=</span><span class='no'>Tp</span>,<span class='kw'>ncXm</span><span class='kw'>=</span><span class='fl'>2</span>,<span class='kw'>seed</span><span class='kw'>=</span><span class='fl'>2</span>,<span class='kw'>fun</span><span class='kw'>=</span><span class='no'>fnp</span>,<span class='kw'>eta</span> <span class='kw'>=</span> <span class='fl'>200</span>,<span class='kw'>modclass</span><span class='kw'>=</span><span class='st'>"poiscd"</span>)
 <span class='no'>k</span><span class='kw'>=</span><span class='fl'>1</span>; <span class='no'>lp</span><span class='kw'>=</span><span class='no'>k</span>*(<span class='no'>k</span>+<span class='fl'>1</span>)/<span class='fl'>2</span>; <span class='no'>startp</span> <span class='kw'>=</span> <span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/rep'>rep</a></span>(<span class='fl'>0.2</span>,<span class='no'>lp</span>); <span class='co'># fun() is known</span>
 <span class='no'>zg1</span><span class='kw'>=</span><span class='kw pkg'>RpacSPD</span><span class='kw ns'>::</span><span class='fu'><a href='https://www.rdocumentation.org/packages/RpacSPD/topics/reg_cdir'>reg_cdir</a></span>(<span class='kw'>startdel</span><span class='kw'>=</span><span class='no'>startp</span>,<span class='kw'>Y</span><span class='kw'>=</span><span class='no'>datpois</span>$<span class='no'>Y</span>,<span class='kw'>X</span><span class='kw'>=</span><span class='no'>datpois</span>$<span class='no'>X</span>,<span class='kw'>Xm</span><span class='kw'>=</span><span class='kw'>NULL</span>,<span class='kw'>Xi</span><span class='kw'>=</span><span class='no'>datpois</span>$<span class='no'>X</span>,<span class='kw'>Tid</span><span class='kw'>=</span><span class='no'>datpois</span>$<span class='no'>tpID</span>,
-<span class='kw'>Pid</span><span class='kw'>=</span><span class='no'>datpois</span>$<span class='no'>psID</span>,<span class='kw'>fun</span><span class='kw'>=</span><span class='no'>fnp</span>,<span class='kw'>k</span><span class='kw'>=</span><span class='no'>k</span>,<span class='kw'>nt</span><span class='kw'>=</span><span class='no'>lp</span>,<span class='kw'>utid</span><span class='kw'>=</span><span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/c'>c</a></span>(<span class='fl'>2</span>:<span class='no'>Tp</span>),<span class='kw'>modclass</span><span class='kw'>=</span><span class='st'>"poiscd"</span>) <span class='co'>#return function value</span></div><div class='output co'>#&gt; <span class='warning'>Warning: one-dimensional optimization by Nelder-Mead is unreliable:</span>
+<span class='kw'>Pid</span><span class='kw'>=</span><span class='no'>datpois</span>$<span class='no'>psID</span>,<span class='kw'>fun</span><span class='kw'>=</span><span class='no'>fnp</span>,<span class='kw'>k</span><span class='kw'>=</span><span class='no'>k</span>,<span class='kw'>nt</span><span class='kw'>=</span><span class='no'>lp</span>,<span class='kw'>utid</span><span class='kw'>=</span><span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/c'>c</a></span>(<span class='fl'>2</span>:<span class='no'>Tp</span>),<span class='kw'>modclass</span><span class='kw'>=</span><span class='st'>"poiscd"</span>,<span class='kw'>rvcov</span><span class='kw'>=</span><span class='fl'>TRUE</span>) <span class='co'>#return function value</span></div><div class='output co'>#&gt; <span class='warning'>Warning: one-dimensional optimization by Nelder-Mead is unreliable:</span>
 #&gt; <span class='warning'>use "Brent" or optimize() directly</span></div><div class='input'><span class='fu'><a href='BIC.html'>BIC</a></span>(<span class='no'>zg1</span>) <span class='co'>#compute BIC of fitted model</span></div><div class='output co'>#&gt; [1] 525.4116</div><div class='input'>
 <span class='no'>k</span><span class='kw'>=</span><span class='fl'>4</span>; <span class='no'>lp</span><span class='kw'>=</span><span class='no'>k</span>*(<span class='no'>k</span>+<span class='fl'>1</span>)/<span class='fl'>2</span>; <span class='no'>startp</span> <span class='kw'>=</span> <span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/rep'>rep</a></span>(<span class='fl'>0</span>,<span class='no'>lp</span>); <span class='co'># fun() is polynomial approximated</span>
 <span class='no'>zg4</span><span class='kw'>=</span><span class='kw pkg'>RpacSPD</span><span class='kw ns'>::</span><span class='fu'><a href='https://www.rdocumentation.org/packages/RpacSPD/topics/reg_cdir'>reg_cdir</a></span>(<span class='kw'>startdel</span><span class='kw'>=</span><span class='no'>startp</span>,<span class='kw'>Y</span><span class='kw'>=</span><span class='no'>datpois2</span>$<span class='no'>Y</span>,<span class='kw'>X</span><span class='kw'>=</span><span class='no'>datpois2</span>$<span class='no'>X</span>,<span class='kw'>Xm</span><span class='kw'>=</span><span class='no'>datpois2</span>[<span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/c'>c</a></span>(<span class='st'>"X1"</span>,<span class='st'>"X2"</span>)],
 <span class='kw'>Xi</span><span class='kw'>=</span><span class='no'>datpois2</span>$<span class='no'>X</span>,<span class='kw'>Tid</span><span class='kw'>=</span><span class='no'>datpois2</span>$<span class='no'>tpID</span>,<span class='kw'>Pid</span><span class='kw'>=</span><span class='no'>datpois2</span>$<span class='no'>psID</span>,<span class='kw'>fun</span><span class='kw'>=</span><span class='no'>polyexp</span>,<span class='kw'>k</span><span class='kw'>=</span><span class='no'>k</span>,<span class='kw'>nt</span><span class='kw'>=</span><span class='no'>lp</span>,<span class='kw'>utid</span><span class='kw'>=</span><span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/c'>c</a></span>(<span class='fl'>2</span>:<span class='no'>Tp</span>),
-<span class='kw'>modclass</span><span class='kw'>=</span><span class='st'>"poiscd"</span>)
+<span class='kw'>modclass</span><span class='kw'>=</span><span class='st'>"poiscd"</span>,<span class='kw'>rvcov</span><span class='kw'>=</span><span class='fl'>TRUE</span>)
 <span class='fu'><a href='BIC.html'>BIC</a></span>(<span class='no'>zg4</span>) <span class='co'>#compute BIC of fitted model</span></div><div class='output co'>#&gt; [1] 581.1042</div><div class='input'>
 </div></pre>
   </div>

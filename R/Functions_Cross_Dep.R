@@ -25,6 +25,10 @@
 #' "critobs" - observation-specific criterion values, squared residuals for 
 #' "lmcd", negative log-likelihoods for MLE methods, etc., or "Xweight" vector X*W where W collects weight matrices
 #' through time.
+#' @param eta extra parameter to be passed, eg. \eqn{\theta} for negative binomial,\eqn{\tau} for quantile
+#' regression.
+#' @param dWzero logical. Should the diagonal elements of the weight matrix be set to zero? 
+#' Defaults to \code{FALSE}. Choose option \code{TRUE} if own drivers \code{Xi} should affect the outcome
 #' 
 #' @return criterion value or vector of observation-specific criterion values if \code{crit_obs=TRUE}
 #' 
@@ -39,28 +43,18 @@
 #' 
 #' @export
 
-ncd_gen<- function(pars,Y,X,Xm=NULL,Xi=X,Tid,Pid,fun,k=1,nt,utid,modclass="lmcd",rval="crit")
+ncd_gen<- function(pars,Y,X,Xm=NULL,Xi=X,Tid,Pid,fun,k=1,nt,utid,modclass="lmcd",rval="crit",eta=0.5,dWzero=FALSE)
 {
   alf = pars[1]; rho = pars[2]; 
-  if(modclass!="nbcd"){ #can include other classes needing extra parameters, eg.quantile reg.
-    eta=NULL
-    if(!is.null(Xm)){
-      Xm=as.matrix(Xm)
-      npxm = ncol(Xm)
-      bets = pars[3:(2+npxm)]; zp = 2+npxm
-    }else{
-      zp = 2
-    }
+  
+  if(!is.null(Xm)){
+    Xm=as.matrix(Xm)
+    npxm = ncol(Xm)
+    bets = pars[3:(2+npxm)]; zp = 2+npxm
   }else{
-    eta=pars[3]
-    if(!is.null(Xm)){
-      Xm=as.matrix(Xm)
-      npxm = ncol(Xm)
-      bets = pars[4:(3+npxm)]; zp = 3+npxm
-    }else{
-      zp = 3
-    }
+    zp = 2
   }
+  
   deli = pars[-c(1:zp)];
   if(nt!=length(deli)){
     cat("The model class",modclass,"requires",I(nt+zp),"parameters","\n")
@@ -78,9 +72,18 @@ ncd_gen<- function(pars,Y,X,Xm=NULL,Xi=X,Tid,Pid,fun,k=1,nt,utid,modclass="lmcd"
     for (i in 1:N) {
       xit1 = Xi[((i-1)*Tp + t-1),] #extract xi at t-1
       for (j in 1:N) {
-        xjt1 = Xi[((j-1)*Tp + t-1),] #extract xj at t-1
-        W[i,j] = exp(sum(c(fun(xit1,xjt1,k))*deli))
-      }
+        if(i!=j){ #for the diagonal term
+          xjt1 = Xi[((j-1)*Tp + t-1),] #extract xj at t-1
+          W[i,j] = exp(sum(c(fun(xit1,xjt1,k))*deli))
+        }else{ #if diagonal, act on diagonal of W
+          if(!dWzero){ 
+            xjt1 = Xi[((j-1)*Tp + t-1),] #extract xj at t-1
+            W[i,j] = exp(sum(c(fun(xit1,xjt1,k))*deli))
+          }else{
+            W[i,j] = 0.0  
+          }
+        }  #end if
+      } #end for j
       #row-normalise
       W[i,] = W[i,]/sum(W[i,])
       id=(i-1)*Tp + t
@@ -128,7 +131,8 @@ swvcovHR<- function(hessmat, estfmat)
     zk = matrix(estfmat[i,],nrow = 1)
     meat<- meat + t(zk)%*%zk #take sum of outer products
   } #end for i
-  bread = solve(hessmat)
+  meat = (1/n)*meat
+  bread = solve((1/n)*hessmat)
   
   varcov = bread%*%meat%*%bread
   varcov/(n-k) #adjust for degrees of freedom
@@ -136,7 +140,7 @@ swvcovHR<- function(hessmat, estfmat)
 
 
 #==================================================================================================>
-#' Cross-sectional depdence in regression
+#' Cross-sectional dependence in regression
 #' 
 #' A routine that takes starting values and model specifications as in \code{ncd_gen()} and returns
 #' regression results.
@@ -188,18 +192,15 @@ reg_cd<- function(startp,...,rvcov=FALSE){
   pvwald<- 1-stats::pchisq(Wstat,df)
   if(!rvcov){
     ans = list(coefs=optobj$par, stde=stde, tstat=tstat, pval=pval,fval=optobj$value,df=df,Wstat=Wstat,pvwald=pvwald)
-    namen_ans<- c("coefs", "stde", "tstat", "pval","fval","df","Wstat","pvwald")
   }else{
-    ans = list(coefs=optobj$par, stde=stde, tstat=tstat, pval=pval,df=df,varcov=vcovfn,Wstat=Wstat,pvwald=pvwald)
-    namen_ans<- c("coefs", "stde", "tstat", "pval","fval","df","varcov","Wstat","pvwald")
+    ans = list(coefs=optobj$par, stde=stde, tstat=tstat, pval=pval,fval=optobj$value,df=df,varcov=vcovfn,Wstat=Wstat,pvwald=pvwald)
   }
   class(ans)<- c(argz$modclass,"regcd")
-  names(ans)<- namen_ans
   ans
 }
 
 #==================================================================================================>
-#' Cross-sectional depdence in regression
+#' Cross-sectional dependence in regression
 #' 
 #' A routine like \code{reg_cd()} that partially optimises with respect \strong{\eqn{\delta}} and 
 #' uses internal R routines to optimise with respect to \strong{\eqn{\beta}}. This is particularly
@@ -234,43 +235,58 @@ reg_cd<- function(startp,...,rvcov=FALSE){
 #' datpois2 = gdat_cd(pars=pars2,N=N,Tp=Tp,ncXm=2,seed=2,fun=fnp,eta = 200,modclass="poiscd")
 #' k=1; lp=k*(k+1)/2; startp = rep(0.2,lp); # fun() is known
 #' zg1=RpacSPD::reg_cdir(startdel=startp,Y=datpois$Y,X=datpois$X,Xm=NULL,Xi=datpois$X,Tid=datpois$tpID,
-#' Pid=datpois$psID,fun=fnp,k=k,nt=lp,utid=c(2:Tp),modclass="poiscd") #return function value
+#' Pid=datpois$psID,fun=fnp,k=k,nt=lp,utid=c(2:Tp),modclass="poiscd",rvcov=TRUE) #return function value
 #' BIC(zg1) #compute BIC of fitted model
 #'
 #' k=4; lp=k*(k+1)/2; startp = rep(0,lp); # fun() is polynomial approximated
 #' zg4=RpacSPD::reg_cdir(startdel=startp,Y=datpois2$Y,X=datpois2$X,Xm=datpois2[c("X1","X2")],
 #' Xi=datpois2$X,Tid=datpois2$tpID,Pid=datpois2$psID,fun=polyexp,k=k,nt=lp,utid=c(2:Tp),
-#' modclass="poiscd")
+#' modclass="poiscd",rvcov=TRUE)
 #' BIC(zg4) #compute BIC of fitted model
 #' 
 #' @export
 
 reg_cdir<- function(startdel,Y,X,Xm,...,modclass="lmcd",rvcov=FALSE){
   argz = as.list(match.call())
-  fncd<- function(pars,rval){ncd_gen(pars = pars,Y=Y,X=X,Xm=Xm,...,modclass=modclass,rval=rval)}
+  fncd<- function(pars,rval,eta=0.5){ncd_gen(pars = pars,Y=Y,X=X,Xm=Xm,...,modclass=modclass,rval=rval,eta=eta)}
   # assign class and pass to regir
   obdat<- list(Y=Y,Xmat=cbind(X,Xm))
   class(obdat)<- modclass 
   bets=stats::coef(regir(obdat)) #as starting values for beta
   
   fncdir<- function(del,rval="crit"){
-  Xw = fncd(pars=c(bets,del),rval="Xw") #only del counts in computing Xw, bets is a dummy
+  Xw = fncd(pars=c(bets,del),rval="Xw") #only del counts in computing Xw, bets is a dummy    
   obdat<- list(Y=Y,Xmat=cbind(Xw,Xm))
   class(obdat)<- modclass
   if(rval=="crit"){
   val = -stats::logLik(regir(obdat)) #return negative log-likelihood
   }else if(rval=="coefs"){
+    if(modclass!="nbcd"){
     val = stats::coef(regir(obdat)) #return beta
+    }else{
+      robj = regir(obdat); th = robj$theta
+      parz = stats::coef(robj) #return beta  
+      val = list(pars=parz,theta = th)
+    }
   }
   val
   }
   
   optobj<- stats::optim(par = startdel,fn=fncdir) #include possibility of multistart
-  bets = fncdir(del=optobj$par, rval="coefs") #extract optimal beta
-  pars = c(bets,optobj$par) #merge vectors beta and delta
   
-  estfmat=pracma::jacobian(fncd,pars,rval = "critobs")
-  hessmat=pracma::hessian(fncd,pars,rval = "crit")
+  if(modclass!="nbcd"){
+    bets = fncdir(del=optobj$par, rval="coefs") #extract optimal beta
+    pars = c(bets,optobj$par) #merge vectors beta and delta  
+    estfmat=pracma::jacobian(fncd,pars,rval = "critobs")
+    hessmat=pracma::hessian(fncd,pars,rval = "crit")
+  }else{
+    zg = fncdir(del=optobj$par, rval="coefs") #extract optimal beta
+    bets = zg$pars; th = zg$theta
+    pars = c(bets,optobj$par) #merge vectors beta and delta  
+    estfmat=pracma::jacobian(fncd,pars,rval = "critobs",eta=th)
+    hessmat=pracma::hessian(fncd,pars,rval = "crit",eta=th)
+  }
+  
   vcovfn=swvcovHR(hessmat=hessmat, estfmat=estfmat)
   stde<- sqrt(diag(vcovfn)) # Compute standard errors
   tstat<- pars/stde # Compute t statistics
@@ -281,13 +297,10 @@ reg_cdir<- function(startdel,Y,X,Xm,...,modclass="lmcd",rvcov=FALSE){
   pvwald<- 1-stats::pchisq(Wstat,df)
   if(!rvcov){
     ans = list(coefs=pars, stde=stde, tstat=tstat, pval=pval,fval=optobj$value,df=df,Wstat=Wstat,pvwald=pvwald)
-    namen_ans<- c("coefs", "stde", "tstat", "pval","fval","df","Wstat","pvwald")
   }else{
-    ans = list(coefs=pars, stde=stde, tstat=tstat, pval=pval,df=df,varcov=vcovfn,Wstat=Wstat,pvwald=pvwald)
-    namen_ans<- c("coefs", "stde", "tstat", "pval","fval","df","varcov","Wstat","pvwald")
+    ans = list(coefs=pars, stde=stde, tstat=tstat, pval=pval,fval=optobj$value,df=df,varcov=vcovfn,Wstat=Wstat,pvwald=pvwald)
   }
   class(ans)<- c(argz$modclass,"regcd")
-  names(ans)<- namen_ans
   ans
 }
 

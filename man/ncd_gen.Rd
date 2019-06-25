@@ -5,7 +5,8 @@
 \title{Cross-sectional dependence in models}
 \usage{
 ncd_gen(pars, Y, X, Xm = NULL, Xi = X, Tid, Pid, fun, k = 1, nt,
-  utid, modclass = "lmcd", rval = "crit")
+  utid, modclass = "lmcd", rval = "crit", eta = 0.5,
+  dWzero = FALSE)
 }
 \arguments{
 \item{pars}{vector of parameter values at which to evaluate the function}
@@ -39,6 +40,12 @@ forms of \code{fun}}
 "critobs" - observation-specific criterion values, squared residuals for 
 "lmcd", negative log-likelihoods for MLE methods, etc., or "Xweight" vector X*W where W collects weight matrices
 through time.}
+
+\item{eta}{extra parameter to be passed, eg. \eqn{\theta} for negative binomial,\eqn{\tau} for quantile
+regression.}
+
+\item{dWzero}{logical. Should the diagonal elements of the weight matrix be set to zero? 
+Defaults to \code{FALSE}. Choose option \code{TRUE} if own drivers \code{Xi} should affect the outcome}
 }
 \value{
 criterion value or vector of observation-specific criterion values if \code{crit_obs=TRUE}
