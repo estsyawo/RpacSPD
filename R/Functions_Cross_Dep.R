@@ -8,7 +8,7 @@
 #' 
 #' @param pars vector of parameter values at which to evaluate the function
 #' @param Y outcome variable
-#' @param X matrix of covariates or design matrix
+#' @param X matrix of covariates that generate spillovers
 #' @param Xm matrix of other control variables
 #' @param Xi matrix of variable(s) that drive cross-sectional dependence
 #' @param Tid time ID
@@ -23,8 +23,9 @@
 #' @param modclass the class of model. See description above for classes supported.
 #' @param rval character string naming the output to return; "crit" - value of criterion, 
 #' "critobs" - observation-specific criterion values, squared residuals for 
-#' "lmcd", negative log-likelihoods for MLE methods, etc., or "Xweight" vector X*W where W collects weight matrices
-#' through time.
+#' "lmcd", negative log-likelihoods for MLE methods, etc., "X" vector X*W where W collects weight matrices
+#' through time, or "PE" to return the linear combination lc and NxN weight matrices in a list of length utid.
+#' Use this last option for computing (private and spillover) partial effects
 #' @param eta extra parameter to be passed, eg. \eqn{\theta} for negative binomial,\eqn{\tau} for quantile
 #' regression.
 #' @param dWzero logical. Should the diagonal elements of the weight matrix be set to zero? 
@@ -38,8 +39,8 @@
 #' k=1; lp=k*(k+1)/2; startp = rep(0.2,(lp+2))
 #' RpacSPD::ncd_gen(pars=startp,Y=datpois$Y,X=datpois$X,Xm=NULL,Xi=datpois$X,Tid=datpois$tpID,
 #' Pid=datpois$psID,fun=fnp,k=k,nt=lp,utid=c(2:Tp),modclass="poiscd") #return function value
-#' RpacSPD::ncd_gen(pars=startp,Y=datpois$Y,X=datpois$X,Xm=NULL,Xi=datpois$X,Tid=datpois$tpID,
-#' Pid=datpois$psID,fun=fnp,k=k,nt=lp,utid=c(2:Tp),modclass="poiscd",rval="Xw") #return Xw
+#' ag=RpacSPD::ncd_gen(pars=startp,Y=datpois$Y,X=datpois$X,Xm=NULL,Xi=datpois$X,Tid=datpois$tpID,
+#' Pid=datpois$psID,fun=fnp,k=k,nt=lp,utid=c(2:Tp),modclass="poiscd",rval="PE",dWzero=TRUE) #return Xw
 #' 
 #' @export
 
@@ -68,6 +69,7 @@ ncd_gen<- function(pars,Y,X,Xm=NULL,Xi=X,Tid,Pid,fun,k=1,nt,utid,modclass="lmcd"
   Xi = as.matrix(Xi)
   # initialise weight matrix
   W = matrix(NA,N,N)
+  if(rval=="PE"){cnt=1;SpMatlist=list()} #initialise counter and list if return "PE"
   for (t in utid) {
     for (i in 1:N) {
       xit1 = Xi[((i-1)*Tp + t-1),] #extract xi at t-1
@@ -79,6 +81,121 @@ ncd_gen<- function(pars,Y,X,Xm=NULL,Xi=X,Tid,Pid,fun,k=1,nt,utid,modclass="lmcd"
           if(!dWzero){ 
             xjt1 = Xi[((j-1)*Tp + t-1),] #extract xj at t-1
             W[i,j] = exp(sum(c(fun(xit1,xjt1,k))*deli))
+          }else{
+            W[i,j] = 0.0  
+          }
+        }  #end if
+      } #end for j
+      #row-normalise
+      W[i,] = W[i,]/sum(W[i,])
+      id=(i-1)*Tp + t
+      idintv<- ((1:N)-1)*Tp + t
+      XX[id] = sum(X[idintv]*W[i,])
+    }
+    if(rval=="PE"){SpMatlist[[cnt]]=W;cnt=cnt+1}
+  } #end t
+  if(!is.null(Xm)){
+    lc = alf+rho*XX[ID] + Xm[ID,]%*%matrix(bets,ncol = 1)
+  }else{
+    lc = alf+rho*XX[ID]
+  }
+  if(rval=="crit"){
+    val = crit(c_crit(Y[ID],lc,eta=eta,modclass = modclass))
+  }else if(rval=="critobs"){
+    val = crit_obs(c_crit(Y[ID],lc,eta=eta,modclass = modclass))
+  }else if(rval=="Xw"){
+    val = XX
+  }else if(rval=="PE"){
+    val = list(SpMatlist=SpMatlist,lc=lc)
+    }else{
+    stop(paste("The return value type",rval,"is not supported."))
+  }
+  return(val)
+}
+
+#==================================================================================================>
+#' Cross-sectional dependence in models
+#' 
+#' This routine computes all models considered for cross-sectional dependence using endogenously
+#' generated weight matrices. Currently "lmcd" for linear regression, "logitcd" (logit model), 
+#' "poiscd" (poisson model), "probitcd" (probit model), "nbcd" (negative binomial) are supported.
+#' Note: the data should first be sorted by unit ID \code{Pid}, then by time ID \code{Tid}
+#' 
+#' @param pars vector of parameter values at which to evaluate the function
+#' @param Y outcome variable
+#' @param X matrix of covariates that generate spillovers or cross-sectional dependence
+#' @param Xm matrix of other control variables
+#' @param Tid time ID
+#' @param Pid unit ID
+#' @param wfun a user-supplied function of indices i,j, t, and \eqn{\delta} that directly models the (i,j)'th 
+#' \eqn{i \not = j}  entry (without normalisation) of the spatial matrix at period t. This is a more flexible option
+#' vis-a-vis \code{fun} argument in \code{\link{ncd_gen}}. See example below.
+#' @param k order of polynomial approximation for \code{fun()}; this can be set as a dummy for non-polynomial
+#' forms of \code{fun}
+#' @param nt number of terms in approximation; should be of length equal to output of \code{fun()}
+#' @param utid unique time IDs to be used in the estimation; should leave at least 1 period for lagged Xi
+#' @param modclass the class of model. See description above for classes supported.
+#' @param rval character string naming the output to return; "crit" - value of criterion, 
+#' "critobs" - observation-specific criterion values, squared residuals for 
+#' "lmcd", negative log-likelihoods for MLE methods, etc., or "Xweight" vector X*W where W collects weight matrices
+#' through time.
+#' @param eta extra parameter to be passed, eg. \eqn{\theta} for negative binomial,\eqn{\tau} for quantile
+#' regression.
+#' @param dWzero logical. Should the diagonal elements of the weight matrix be set to zero? 
+#' Defaults to \code{FALSE}. Choose option \code{TRUE} if own drivers \code{Xi} should affect the outcome
+#' 
+#' @return criterion value or vector of observation-specific criterion values if \code{crit_obs=TRUE}
+#' 
+#' @examples 
+#' pars=c(1.0,0.5,0.8); N = 5; Tp = 6; fnp<- function(x,y,k){-(0.5*y^4+(x-y)^4)^.25} #dummy k
+#' datpois=gdat_cd(pars=pars,N=N,Tp=Tp,seed=2,fun=fnp,eta = 200,modclass="poiscd") #poisson data 
+#' k=1; lp=k*(k+1)/2; startp = rep(0.2,(lp+2)) 
+#' wfn = function(i,j,t,del){ Xi=datpois$X; xit1 = datpois$X[((i-1)*Tp + t-1)]; 
+#' xjt1 = datpois$X[((j-1)*Tp + t-1)]; return(exp(sum(c(fnp(xit1,xjt1,k))*del)))} #weight function
+#' wfn(2,3,4,0.5) #test the weight function
+#' RpacSPD::ncd_gen2(pars=startp,Y=datpois$Y,X=datpois$X,Xm=NULL,Tid=datpois$tpID,
+#' Pid=datpois$psID,wfun=wfn,k=k,nt=lp,utid=c(2:Tp),modclass="poiscd") #return function value
+#' RpacSPD::ncd_gen2(pars=startp,Y=datpois$Y,X=datpois$X,Xm=NULL,Tid=datpois$tpID,
+#' Pid=datpois$psID,wfun=wfn,k=k,nt=lp,utid=c(2:Tp),modclass="poiscd",rval="Xw") #return Xw
+#' 
+#' @export
+
+ncd_gen2<- function(pars,Y,X,Xm=NULL,Tid,Pid,wfun,k=1,nt,utid,modclass="lmcd",rval="crit",eta=0.5,dWzero=FALSE)
+{
+  alf = pars[1]; rho = pars[2]; 
+  
+  if(!is.null(Xm)){
+    Xm=as.matrix(Xm)
+    npxm = ncol(Xm)
+    bets = pars[3:(2+npxm)]; zp = 2+npxm
+  }else{
+    zp = 2
+  }
+  
+  deli = pars[-c(1:zp)];
+  if(nt!=length(deli)){
+    cat("The model class",modclass,"requires",I(nt+zp),"parameters","\n")
+    stop("Length of parameter vector incorrect.")
+  }
+  
+  N = length(unique(Pid)) #extract N
+  ID = which(Tid>=min(utid))
+  Tp = max(utid) #extract T
+  XX = rep(NA,length(Y)) # to store weighted covariates
+  #Xi = as.matrix(Xi)
+  # initialise weight matrix
+  W = matrix(NA,N,N)
+  for (t in utid) {
+    for (i in 1:N) {
+      #xit1 = Xi[((i-1)*Tp + t-1),] #extract xi at t-1
+      for (j in 1:N) {
+        if(i!=j){ #for the diagonal term
+          #xjt1 = Xi[((j-1)*Tp + t-1),] #extract xj at t-1
+          W[i,j] = wfun(i,j,t,deli)
+        }else{ #if diagonal, act on diagonal of W
+          if(!dWzero){ 
+            #xjt1 = Xi[((j-1)*Tp + t-1),] #extract xj at t-1
+            W[i,j] = wfun(i,j,t,deli) #exp(sum(c(fun(xit1,xjt1,k))*deli))
           }else{
             W[i,j] = 0.0  
           }
@@ -107,7 +224,6 @@ ncd_gen<- function(pars,Y,X,Xm=NULL,Xi=X,Tid,Pid,fun,k=1,nt,utid,modclass="lmcd"
   }
   return(val)
 }
-
 #==================================================================================================>
 #' Huber-White Sandwich Estimator
 #' 
@@ -270,6 +386,118 @@ reg_cdir<- function(startdel,Y,X,Xm,...,modclass="lmcd",rvcov=FALSE){
     }
   }
   val
+  }
+  
+  optobj<- stats::optim(par = startdel,fn=fncdir) #include possibility of multistart
+  
+  if(modclass!="nbcd"){
+    bets = fncdir(del=optobj$par, rval="coefs") #extract optimal beta
+    pars = c(bets,optobj$par) #merge vectors beta and delta  
+    estfmat=pracma::jacobian(fncd,pars,rval = "critobs")
+    hessmat=pracma::hessian(fncd,pars,rval = "crit")
+  }else{
+    zg = fncdir(del=optobj$par, rval="coefs") #extract optimal beta
+    bets = zg$pars; th = zg$theta
+    pars = c(bets,optobj$par) #merge vectors beta and delta  
+    estfmat=pracma::jacobian(fncd,pars,rval = "critobs",eta=th)
+    hessmat=pracma::hessian(fncd,pars,rval = "crit",eta=th)
+  }
+  
+  vcovfn=swvcovHR(hessmat=hessmat, estfmat=estfmat)
+  stde<- sqrt(diag(vcovfn)) # Compute standard errors
+  tstat<- pars/stde # Compute t statistics
+  n = max(dim(estfmat)); k = min(dim(estfmat))
+  df = n - k #obtain degree of freedom
+  pval = 2*(1-stats::pt(abs(tstat),df))
+  Wstat = matrix(pars,nrow = 1)%*%solve(vcovfn)%*%matrix(pars,ncol = 1) #compute wald chi-square statistic
+  pvwald<- 1-stats::pchisq(Wstat,df)
+  if(!rvcov){
+    ans = list(coefs=pars, stde=stde, tstat=tstat, pval=pval,fval=optobj$value,df=df,Wstat=Wstat,pvwald=pvwald)
+  }else{
+    ans = list(coefs=pars, stde=stde, tstat=tstat, pval=pval,fval=optobj$value,df=df,varcov=vcovfn,Wstat=Wstat,pvwald=pvwald)
+  }
+  class(ans)<- c(argz$modclass,"regcd")
+  ans
+}
+
+
+#==================================================================================================>
+#' Cross-sectional dependence in regression
+#' 
+#' A routine like \code{reg_cd()} that partially optimises with respect \strong{\eqn{\delta}} and 
+#' uses internal R routines to optimise with respect to \strong{\eqn{\beta}}. This is particularly
+#' helpful in high dimensional settings.
+#' 
+#' @param startdel vector of starting values for \strong{\eqn{\delta}}
+#' @param Y outcome variable
+#' @param X matrix of covariates or design matrix
+#' @param Xm matrix of other control variables
+#' @param ... other arguments to be passed to \link{ncd_gen2} \strong{except} arguments listed here and \code{rval}.
+#' Argument names must match exactly.
+#' @param modclass the class of model. See description above for classes supported.
+#' @param rvcov Logical. Should the variance-covariance matrix be returned?
+#' 
+#' @return A list
+#' \itemize{
+#'   \item coefs vector of coefficients
+#'   \item stde vector of standard errors
+#'   \item tstat vector of t-statistics
+#'   \item pval vector of p-values
+#'   \item varcov variance-covariance matrix if \code{rvcov} is set to \code{TRUE}
+#'   \item Wstat a Wald chi-square statistic
+#'   \item pvwald Prob>Wstat 
+#' }
+#' 
+#' @seealso \link{ncd_gen}, \link{reg_cd}
+#' 
+#' @examples 
+#' pars = c(1.0,0.5,0.8); pars2=pars = c(1.0,0.5,0.8,0.1,-0.1); N = 10; Tp = 16 
+#' fnp<- function(x,y,k) {-(0.5*y^4 + (x-y)^4)^.25} # a dummy k
+#' datpois = gdat_cd(pars=pars,N=N,Tp=Tp,seed=2,fun=fnp,eta = 200,modclass="poiscd") 
+#' datpois2 = gdat_cd(pars=pars2,N=N,Tp=Tp,ncXm=2,seed=2,fun=fnp,eta = 200,modclass="poiscd")
+#' k=1; lp=k*(k+1)/2; startp = rep(0.2,lp); # fun() is known
+#' wfn = function(i,j,t,del){ Xi=datpois$X; xit1 = datpois$X[((i-1)*Tp + t-1)]; 
+#' xjt1 = datpois$X[((j-1)*Tp + t-1)]; return(exp(sum(c(fnp(xit1,xjt1,k)*del))))} #weight function
+#' zg1=RpacSPD::reg_cdir2(startdel=startp,Y=datpois$Y,X=datpois$X,Xm=NULL,Tid=datpois$tpID,
+#' Pid=datpois$psID,wfun=wfn,k=k,nt=lp,utid=c(2:Tp),modclass="poiscd",rvcov=TRUE) #return function value
+#' BIC(zg1) #compute BIC of fitted model
+#'
+#' k=4; lp=k*(k+1)/2; startp = rep(0.1,lp); # fun() is polynomial approximated
+#' wfnp = function(i,j,t,del){ Xi=datpois$X; xit1 = datpois$X[((i-1)*Tp + t-1)]; 
+#' xjt1 = datpois$X[((j-1)*Tp + t-1)]; return(exp(sum(c(polyexp(xit1,xjt1,k)*del))))} #weight function
+#' wfnp(3,2,7,startp) #illustration
+#' startp = rep(0.0,lp)
+#' zg4=RpacSPD::reg_cdir2(startdel=startp,Y=datpois2$Y,X=datpois2$X,Xm=datpois2[c("X1","X2")],
+#' Tid=datpois2$tpID,Pid=datpois2$psID,wfun=wfnp,k=k,nt=lp,utid=c(2:Tp),
+#' modclass="poiscd",rvcov=TRUE)
+#' BIC(zg4) #compute BIC of fitted model
+#' 
+#' @export
+
+reg_cdir2<- function(startdel,Y,X,Xm,...,modclass="lmcd",rvcov=FALSE){
+  argz = as.list(match.call())
+  fncd<- function(pars,rval,eta=0.5){ncd_gen2(pars = pars,Y=Y,X=X,Xm=Xm,...,modclass=modclass,rval=rval,eta=eta)}
+  # assign class and pass to regir
+  obdat<- list(Y=Y,Xmat=cbind(X,Xm))
+  class(obdat)<- modclass 
+  bets=stats::coef(regir(obdat)) #as starting values for beta
+  
+  fncdir<- function(del,rval="crit"){
+    Xw = fncd(pars=c(bets,del),rval="Xw") #only del counts in computing Xw, bets is a dummy    
+    obdat<- list(Y=Y,Xmat=cbind(Xw,Xm))
+    class(obdat)<- modclass
+    if(rval=="crit"){
+      val = -stats::logLik(regir(obdat)) #return negative log-likelihood
+    }else if(rval=="coefs"){
+      if(modclass!="nbcd"){
+        val = stats::coef(regir(obdat)) #return beta
+      }else{
+        robj = regir(obdat); th = robj$theta
+        parz = stats::coef(robj) #return beta  
+        val = list(pars=parz,theta = th)
+      }
+    }
+    val
   }
   
   optobj<- stats::optim(par = startdel,fn=fncdir) #include possibility of multistart
